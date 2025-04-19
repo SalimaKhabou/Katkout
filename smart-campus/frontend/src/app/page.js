@@ -2,13 +2,15 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-100 to-white">
       {/* Navbar */}
       <nav className="flex justify-between items-center px-8 py-4 bg-white shadow-md sticky top-0 z-50">
-        <h1 className="text-2xl font-bold text-blue-700">Smart Campus</h1>
+      <Image src="/logofst.png" alt="Smart Campus Logo" width={115} height={1} />
+      <span className="sr-only">Smart Campus</span> {/* accessibilité */}
         <div className="space-x-6">
           <Link href="chatbot" className="text-gray-700 hover:text-blue-600 font-medium">
             Campus Navigation
