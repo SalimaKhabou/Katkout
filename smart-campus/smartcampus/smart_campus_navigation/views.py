@@ -6,6 +6,7 @@ import requests
 # smartcampus/views.py
 import xml.etree.ElementTree as ET
 from django.shortcuts import render
+from .models import LostItem, FoundItem
 
 def home(request):
     return JsonResponse({"message": "Bienvenue sur l'API Smart Campus 🎓"})
@@ -72,3 +73,24 @@ def get_location_info(request):
 
     return JsonResponse({'message': "Désolé, je n'ai pas trouvé de correspondance pour votre requête."})
 
+
+@csrf_exempt
+def add_lost_item(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            description = data.get("description")
+            location = data.get("location")
+            date_lost = data.get("date_lost")
+
+            if not all([description, location, date_lost]):
+                return JsonResponse({"message": "Tous les champs sont requis"}, status=400)
+
+            lost_item = LostItem(description=description, location=location, date_lost=date_lost)
+            lost_item.save()
+
+            return JsonResponse({"message": "Objet perdu ajouté avec succès", "id": lost_item.id})
+        except Exception as e:
+            return JsonResponse({"message": f"Erreur serveur: {str(e)}"}, status=500)
+
+    return JsonResponse({"message": "Méthode non autorisée"}, status=405)
