@@ -1,71 +1,91 @@
 'use client';
-import { useState } from 'react';
-import Navbar from '../../components/Navrbar'; // update path as needed
+import { useState, useRef, useEffect } from 'react';
+import Navbar from '../../components/Navrbar';
+
 export default function ChatbotPage() {
-    const [prompt, setPrompt] = useState('');  // Variable pour récupérer la saisie de l'utilisateur
-    const [messages, setMessages] = useState([]);  // Liste des messages dans le chat
-  
-    const handleSend = async () => {
-      if (!prompt.trim()) return;  // Ne rien faire si l'input est vide
-  
-      const userMessage = { role: 'user', text: prompt };
-      setMessages((prev) => [...prev, userMessage]);
-  
-      try {
-        // Envoi du prompt à l'API backend pour obtenir des informations sur la localisation
-        const res = await fetch(`http://localhost:8000/get-location-info?query=${prompt}`, {
-          method: 'GET',  // Méthode GET pour envoyer la question
-        });
-  
-        const data = await res.json();  // Traitement de la réponse en JSON
-        const botMessage = { role: 'bot', text: data.response };  // Message du bot avec la réponse
-        setMessages((prev) => [...prev, botMessage]);
-      } catch (error) {
-        setMessages((prev) => [
-          ...prev,
-          { role: 'bot', text: 'Une erreur est survenue !' },  // Message d'erreur en cas de problème
-        ]);
-      }
-  
-      setPrompt('');  // Réinitialiser le prompt après l'envoi
-    };
-  
-    return (
-      <div className="min-h-screen bg-gray-50 text-black">
-        <Navbar />
-  
-        {/* Titre de la page */}
-        <div className="text-center mt-8 mb-4">
-          <h2 className="text-3xl font-semibold text-gray-800">🎓 Campus Navigation Chatbot</h2>
-          <p className="text-gray-500">Pose ta question et reçois une réponse instantanée sur le campus.</p>
+  const [prompt, setPrompt] = useState('');
+  const [messages, setMessages] = useState([]);
+  const messagesEndRef = useRef(null);
+
+  const handleSend = async () => {
+    if (!prompt.trim()) return;
+
+    const userMessage = { role: 'user', text: prompt };
+    setMessages((prev) => [...prev, userMessage]);
+
+    try {
+      const res = await fetch(`http://localhost:8000/get-location-info?query=${prompt}`);
+      const data = await res.json();
+      const botMessage = { role: 'bot', text: data.response };
+      setMessages((prev) => [...prev, botMessage]);
+    } catch (error) {
+      setMessages((prev) => [
+        ...prev,
+        { role: 'bot', text: 'Une erreur est survenue !' },
+      ]);
+    }
+
+    setPrompt('');
+  };
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  return (
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 to-white">
+      <Navbar />
+
+      {/* Titre */}
+      <div className="text-center my-6 px-4">
+        <h2 className="text-3xl font-bold text-blue-800">🎓 Smart Campus Assistant</h2>
+        <p className="text-gray-600">Pose ta question pour t’orienter sur le campus.</p>
+      </div>
+
+      {/* Chat container */}
+      <div className="flex flex-col flex-1 max-w-3xl w-full mx-auto px-4">
+        {/* Zone de messages scrollable */}
+        <div className="flex-1 overflow-y-auto bg-white rounded-2xl shadow p-6 space-y-4 h-[500px]">
+          {messages.map((msg, i) => (
+            <div
+              key={i}
+              className={`max-w-[75%] px-4 py-2 rounded-lg text-sm shadow ${
+                msg.role === 'user'
+                  ? 'bg-blue-100 self-end text-right ml-auto'
+                  : 'bg-gray-200 self-start text-left mr-auto'
+              }`}
+            >
+              {msg.text}
+            </div>
+          ))}
+          <div ref={messagesEndRef} />
         </div>
-  
-        {/* Conteneur du chat */}
-        <div className="max-w-2xl mx-auto p-6 bg-white shadow rounded-xl space-y-4">
-          <div className="h-96 overflow-y-auto border rounded p-4 space-y-2 bg-gray-50">
-            {messages.map((msg, i) => (
-              <div key={i} className={`p-2 rounded ${msg.role === 'user' ? 'bg-blue-100 text-right' : 'bg-gray-200 text-left'}`}>
-                {msg.text}
-              </div>
-            ))}
-          </div>
-  
-          {/* Champ de saisie */}
-          <div className="flex space-x-2">
+
+        {/* Zone de saisie fixée en bas */}
+        <div className="sticky bottom-0 bg-white pt-4 pb-6">
+          <div className="flex items-center gap-3 border-t pt-4">
             <input
               type="text"
               value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}  // Met à jour le prompt
-              onKeyDown={(e) => e.key === 'Enter' && handleSend()}  // Envoie au pression de "Enter"
+              onChange={(e) => setPrompt(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSend()}
               placeholder="Écris ta question ici..."
-              className="flex-1 p-2 border rounded"
+              className="flex-1 p-3 border rounded-full  shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-            <button onClick={handleSend} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+            <button
+              onClick={handleSend}
+              className="bg-blue-600 text-white text-sm px-5 py-2 rounded-full hover:bg-blue-700 transition"
+            >
               Envoyer
             </button>
           </div>
         </div>
       </div>
-    );
-  }
-  
+
+      {/* Footer */}
+      <footer className="text-center text-gray-500 text-sm py-6">
+        &copy; 2025 Smart Campus. Tous droits réservés.
+      </footer>
+    </div>
+  );
+}

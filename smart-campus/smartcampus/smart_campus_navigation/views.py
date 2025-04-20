@@ -8,6 +8,13 @@ import xml.etree.ElementTree as ET
 from django.shortcuts import render
 from .models import LostItem, FoundItem
 
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
+from django.http import JsonResponse
+from .models import LostItem, FoundItem
+
+
 def home(request):
     return JsonResponse({"message": "Bienvenue sur l'API Smart Campus 🎓"})
 
@@ -40,7 +47,7 @@ def ask_bot(request):
 # Charger et analyser le fichier XML OpenStreetMap
 def load_osm_data():
     # Chemin du fichier OSM dans le dossier data/
-    tree = ET.parse('data/openstreetmap.xml')  # Assurez-vous que le fichier est dans le bon répertoire
+    tree = ET.parse('smart_campus_navigation/data/openstreetmap.xml')  # Assurez-vous que le fichier est dans le bon répertoire
     root = tree.getroot()
 
     nodes = []
@@ -94,3 +101,39 @@ def add_lost_item(request):
             return JsonResponse({"message": f"Erreur serveur: {str(e)}"}, status=500)
 
     return JsonResponse({"message": "Méthode non autorisée"}, status=405)
+
+
+
+
+
+def compare_descriptions(lost_desc, found_desc):
+    corpus = [lost_desc, found_desc]  # Liste contenant les deux descriptions
+    vectorizer = TfidfVectorizer(stop_words='english')
+    tfidf_matrix = vectorizer.fit_transform(corpus)  # Transformation TF-IDF
+
+    similarity = cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:2])
+    return similarity[0][0]  # Score entre 0 et 1
+
+
+
+
+def find_matches(request, lost_id):
+    try:
+        lost_item = LostItem.objects.get(id=lost_id)
+        found_items = FoundItem.objects.all()
+
+        results = []
+        for found in found_items:
+            score = compare_descriptions(lost_item.description, found.description)
+            if score > 0.7:  # seuil de similarité (vous pouvez l’ajuster)
+                results.append({
+                    "description": found.description,
+                    "location": found.location,
+                    "date_found": found.date_found,
+                    "similarity": round(score, 2)
+                })
+
+        return JsonResponse(results, safe=False)
+    
+    except LostItem.DoesNotExist:
+        return JsonResponse({"error": "Objet perdu introuvable"}, status=404)
