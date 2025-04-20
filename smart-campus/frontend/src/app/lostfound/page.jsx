@@ -10,19 +10,6 @@ export default function LostAndFoundPage() {
   const [foundItems, setFoundItems] = useState([]); // État pour les objets trouvés
   const [searchTerm, setSearchTerm] = useState(''); // État pour la recherche d'objets trouvés
 
-  // Fonction pour soumettre un objet perdu
-  const handleSubmitLostItem = () => {
-    if (!itemDescription || !location || !dateLost) {
-      alert("Veuillez remplir tous les champs.");
-      return;
-    }
-    // Traitement de l'objet perdu (par exemple, envoi à une API)
-    alert("Objet perdu soumis avec succès !");
-    setItemDescription('');
-    setLocation('');
-    setDateLost('');
-  };
-
   // Fonction pour rechercher les objets trouvés
   const handleSearchFoundItems = () => {
     // Implémenter la logique de recherche des objets trouvés
@@ -33,18 +20,52 @@ export default function LostAndFoundPage() {
     setFoundItems(filteredItems);
   };
 
+  const handleSubmitLostItem = async () => {
+    if (!itemDescription || !location || !dateLost) {
+      alert("Veuillez remplir tous les champs.");
+      return;
+    }
+  
+    const response = await fetch('http://localhost:8000/lost-and-found', {
+      method: 'POST',
+      body: JSON.stringify({
+        description: itemDescription,
+        location,
+        date_lost: dateLost
+      }),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+  
+    const responseText = await response.text(); // Récupérer la réponse sous forme de texte
+  
+    // Affiche la réponse brute dans la console
+    console.log('Réponse brute :', responseText);
+  
+    try {
+      const result = JSON.parse(responseText); // Essaye de parser le JSON
+      if (response.ok) {
+        alert('Objet perdu soumis avec succès');
+        // Récupérer les objets trouvés correspondants après soumission de l'objet perdu
+        const matchesResponse = await fetch(`/api/matches/${result.id}`);
+        const matchesResponseText = await matchesResponse.text();
+        console.log('Réponse matches brute :', matchesResponseText);
+        const matches = JSON.parse(matchesResponseText);
+        setFoundItems(matches);  // Mettre à jour les objets trouvés
+      } else {
+        alert('Erreur lors de la soumission');
+      }
+    } catch (error) {
+      console.error('Erreur de parsing JSON :', error);
+      alert('Erreur lors du parsing de la réponse.');
+    }
+  };
+  
   return (
     <div className="min-h-screen bg-gray-50 text-black">
       {/* Navbar */}
-      {/* <nav className="bg-white shadow-md px-6 py-4 flex justify-between items-center">
-        <h1 className="text-xl font-bold text-blue-600">Smart Campus</h1>
-        <div className="space-x-6 text-sm font-medium">
-          <a href="/" className="text-gray-700 hover:text-blue-600">Home</a>
-          <a href="/chatbot" className="text-gray-700 hover:text-blue-600">Campus Navigation</a>
-          <a href="/lost-and-found" className="text-gray-700 hover:text-blue-600">Lost & Found</a>
-        </div>
-      </nav> */}
-         <Navbar />
+      <Navbar />
 
       {/* Page Title */}
       <div className="text-center mt-8 mb-4">
