@@ -1,6 +1,7 @@
 'use client'; // Indique que le code utilise des hooks React et sera exécuté côté client
 
 import { useState } from 'react';
+import Navbar from '../../components/Navrbar'; // update path as needed
 
 export default function LostAndFoundPage() {
   const [itemDescription, setItemDescription] = useState(''); // État pour la description de l'objet perdu
@@ -35,14 +36,15 @@ export default function LostAndFoundPage() {
   return (
     <div className="min-h-screen bg-gray-50 text-black">
       {/* Navbar */}
-      <nav className="bg-white shadow-md px-6 py-4 flex justify-between items-center">
+      {/* <nav className="bg-white shadow-md px-6 py-4 flex justify-between items-center">
         <h1 className="text-xl font-bold text-blue-600">Smart Campus</h1>
         <div className="space-x-6 text-sm font-medium">
           <a href="/" className="text-gray-700 hover:text-blue-600">Home</a>
           <a href="/chatbot" className="text-gray-700 hover:text-blue-600">Campus Navigation</a>
           <a href="/lost-and-found" className="text-gray-700 hover:text-blue-600">Lost & Found</a>
         </div>
-      </nav>
+      </nav> */}
+         <Navbar />
 
       {/* Page Title */}
       <div className="text-center mt-8 mb-4">
