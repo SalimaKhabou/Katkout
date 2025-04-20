@@ -3,6 +3,9 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
 import requests
+# smartcampus/views.py
+import xml.etree.ElementTree as ET
+from django.shortcuts import render
 
 def home(request):
     return JsonResponse({"message": "Bienvenue sur l'API Smart Campus 🎓"})
@@ -31,3 +34,41 @@ def ask_bot(request):
             return JsonResponse({"response": f"Erreur serveur Django: {str(e)}"}, status=500)
 
     return JsonResponse({"response": "Méthode non autorisée"}, status=405)
+
+
+# Charger et analyser le fichier XML OpenStreetMap
+def load_osm_data():
+    # Chemin du fichier OSM dans le dossier data/
+    tree = ET.parse('data/openstreetmap.xml')  # Assurez-vous que le fichier est dans le bon répertoire
+    root = tree.getroot()
+
+    nodes = []
+    for node in root.findall('node'):
+        node_id = node.get('id')
+        lat = float(node.get('lat'))
+        lon = float(node.get('lon'))
+        # On récupère également les tags (comme "name" si disponible)
+        tags = {tag.get('k'): tag.get('v') for tag in node.findall('tag')}
+        nodes.append({
+            'id': node_id,
+            'lat': lat,
+            'lon': lon,
+            'tags': tags  # Tags peuvent inclure des informations comme "name", "building", etc.
+        })
+
+    return nodes
+
+# Vue pour obtenir les informations de localisation basées sur une requête
+def get_location_info(request):
+    query = request.GET.get('query', '').lower()  # Requête de l'utilisateur
+    nodes = load_osm_data()
+
+    for node in nodes:
+        # Rechercher un tag "name" ou d'autres tags en fonction de la requête
+        if 'name' in node['tags'] and query in node['tags']['name'].lower():
+            return JsonResponse({
+                'message': f"Localisation trouvée : {node['tags']['name']} à la latitude {node['lat']} et longitude {node['lon']}."
+            })
+
+    return JsonResponse({'message': "Désolé, je n'ai pas trouvé de correspondance pour votre requête."})
+

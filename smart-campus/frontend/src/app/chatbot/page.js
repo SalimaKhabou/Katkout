@@ -13,7 +13,8 @@ export default function ChatbotPage() {
     setMessages((prev) => [...prev, userMessage]);
 
     try {
-      const res = await fetch('http://localhost:8000/api/ask', {
+    //   const res = await fetch('http://localhost:8000/api/ask', {
+        const res= await fetch(`http://localhost:8000/get-location-info?query=${query}`,{
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt }),
